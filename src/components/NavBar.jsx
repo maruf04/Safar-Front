@@ -22,17 +22,24 @@ const NavBar = () => {
   const handleTrainClick = async () => {
     try {
       const res = await fetch('http://localhost:5000/booking/allTrainNames');
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
       const data = await res.json();
-      if (res.ok && data.name && Array.isArray(data.name)) {
+
+      if (data.name && Array.isArray(data.name)) {
         localStorage.setItem('train_names', JSON.stringify(data.name));
         console.log('Stored train names:', data.name);
+        navigate('/trains');
       } else {
-        console.warn('Unexpected response format:', data);
+        console.error('Invalid data format received');
+        // Fallback in case of invalid data
+        navigate('/trains');
       }
-      navigate('/trains');
-      setMobileMenuActive(false);
     } catch (error) {
       console.error('Error fetching train names:', error);
+      // Navigate even if there's an error (fallback)
+      navigate('/trains');
     }
   };
 
@@ -64,6 +71,8 @@ const NavBar = () => {
 
   const navContainerStyles = {
     maxWidth: '1200px',
+    fontSize: '2rem',
+    fontWeight: 100,
     margin: '0 auto',
     display: 'flex',
     justifyContent: 'space-between',
@@ -72,9 +81,9 @@ const NavBar = () => {
 
   const logoStyles = {
     fontFamily: "'Cairo', 'Amiri', sans-serif",
-    fontSize: '1.8rem',
+    fontSize: '2.5rem',
     fontWeight: 700,
-    letterSpacing: '1px',
+    letterSpacing: '2px',
     color: 'white',
     textDecoration: 'none',
     transition: 'transform 0.3s ease',
@@ -86,11 +95,11 @@ const NavBar = () => {
   const navMenuStyles = {
     display: 'flex',
     listStyle: 'none',
-    gap: '2rem',
+    gap: '1rem',
     alignItems: 'center',
     direction: 'ltr',
     margin: 0,
-    padding: 0,
+    padding: 10,
     ...(mobileMenuActive && {
       position: 'fixed',
       top: '80px',
@@ -191,7 +200,7 @@ const NavBar = () => {
         <Link to="/" style={logoStyles} onClick={closeMobileMenu}>
           سفر
         </Link>
-        
+
         <ul style={navMenuStyles}>
           <li>
             <Link to="/" style={navLinkStyles} onClick={closeMobileMenu}>Home</Link>
@@ -201,9 +210,11 @@ const NavBar = () => {
           </li>
           <li>
             <button
-              onClick={() => {
-                handleTrainClick();
-                closeMobileMenu();
+              onClick={(e) => {
+                e.preventDefault(); // Prevent default behavior
+                handleTrainClick().then(() => {
+                  closeMobileMenu();
+                });
               }}
               style={navLinkStyles}
             >
@@ -211,7 +222,7 @@ const NavBar = () => {
               Trains
             </button>
           </li>
-          
+
           {loginState ? (
             <li>
               <Link to={`/users/${userId}`} style={navLinkStyles} onClick={closeMobileMenu}>My Account</Link>
@@ -222,8 +233,8 @@ const NavBar = () => {
             </li>
           )}
         </ul>
-        
-        <div 
+
+        <div
           style={mobileMenuToggleStyles}
           onClick={toggleMobileMenu}
         >
